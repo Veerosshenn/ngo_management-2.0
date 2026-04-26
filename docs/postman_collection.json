@@ -1,0 +1,46 @@
+{
+  "info": {
+    "name": "Service Day API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Obtain Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"admin1\",\n  \"password\": \"AdminPass123!\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/token/",
+          "host": ["{{base_url}}"],
+          "path": ["api","v1","auth","token"]
+        }
+      }
+    },
+    {
+      "name": "List NGOs",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Token {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/ngos/",
+          "host": ["{{base_url}}"],
+          "path": ["api","v1","ngos"]
+        }
+      }
+    }
+  ]
+}

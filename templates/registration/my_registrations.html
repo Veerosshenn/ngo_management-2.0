@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}My Registrations — NGO Portal{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1>My Registrations</h1>
+    <p>Your activity registration history</p>
+</div>
+
+{% if registrations %}
+<div style="display:flex;flex-direction:column;gap:1rem;">
+    {% for reg in registrations %}
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;
+        {% if reg.status == 'cancelled' %}opacity:0.6;{% endif %}">
+        <div style="flex:1;min-width:200px;">
+            <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem;flex-wrap:wrap;">
+                <a href="{% url 'ngo:activity_detail' reg.activity.id %}"
+                    style="color:var(--text);text-decoration:none;font-weight:700;font-size:1rem;">
+                    {{ reg.activity.title }}
+                </a>
+                {% if reg.status == 'active' %}
+                <span class="badge badge-green">Active</span>
+                {% else %}
+                <span class="badge badge-red">Cancelled</span>
+                {% endif %}
+            </div>
+            <div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:0.83rem;color:var(--muted);">
+                <span>📍 {{ reg.activity.location }}</span>
+                <span>📅 {{ reg.activity.date|date:"d M Y, H:i" }}</span>
+                <span>🗓️ Registered: {{ reg.registered_at|date:"d M Y" }}</span>
+            </div>
+        </div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+            {% if reg.status == 'active' and reg.activity.is_registration_open %}
+            <form method="post" action="{% url 'registration:cancel_activity' reg.activity.id %}" style="margin:0;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger"
+                    onclick="return confirm('Cancel registration for {{ reg.activity.title }}?')">
+                    Cancel
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'ngo:activity_detail' reg.activity.id %}" class="btn btn-outline">View</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">📋</div>
+    <h3>No Registrations Yet</h3>
+    <p>Browse activities and register for ones that interest you.</p>
+    <a href="{% url 'ngo:activity_list' %}" class="btn btn-primary" style="margin-top:1rem;">Browse Activities</a>
+</div>
+{% endif %}
+{% endblock %}

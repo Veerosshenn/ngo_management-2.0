@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard – NGO Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📊 Admin Dashboard</h1>
+    <p>Monitor activities, registrations, and NGO participation in real time.</p>
+</div>
+
+<!-- KPI Cards -->
+<div class="grid grid-3" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));margin-bottom:2rem;">
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2.5rem;font-weight:700;color:var(--accent2);">{{ total_activities }}</div>
+        <div style="color:var(--muted);margin-top:.3rem;font-size:.9rem;">Total Activities</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2.5rem;font-weight:700;color:var(--green);">{{ total_registrations }}</div>
+        <div style="color:var(--muted);margin-top:.3rem;font-size:.9rem;">Active Registrations</div>
+    </div>
+    <div class="card" style="text-align:center;">
+        <div style="font-size:2.5rem;font-weight:700;color:var(--yellow);">{{ total_ngos }}</div>
+        <div style="color:var(--muted);margin-top:.3rem;font-size:.9rem;">NGO Partners</div>
+    </div>
+</div>
+
+<!-- Upcoming Activities with ORM .annotate() data -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Upcoming Activities
+        <span style="font-size:.8rem;color:var(--muted);font-weight:400;">
+            — ORM: .annotate(reg_count=Count('registrations'))
+        </span>
+    </h2>
+    {% if upcoming %}
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+        <thead>
+            <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border);">
+                <th style="padding:.6rem .8rem;">Activity</th>
+                <th style="padding:.6rem .8rem;">NGO</th>
+                <th style="padding:.6rem .8rem;">Date</th>
+                <th style="padding:.6rem .8rem;">Slots</th>
+                <th style="padding:.6rem .8rem;">Registered</th>
+                <th style="padding:.6rem .8rem;">Status</th>
+                <th style="padding:.6rem .8rem;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in upcoming %}
+            <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:.6rem .8rem;font-weight:500;">{{ a.title }}</td>
+                <td style="padding:.6rem .8rem;color:var(--muted);">{{ a.ngo.name|default:"—" }}</td>
+                <td style="padding:.6rem .8rem;color:var(--muted);">{{ a.date|date:"d M Y H:i" }}</td>
+                <td style="padding:.6rem .8rem;">{{ a.max_slots }}</td>
+                <td style="padding:.6rem .8rem;">
+                    <span style="color:{% if a.reg_count >= a.max_slots %}var(--red){% else %}var(--green){% endif %}">
+                        {{ a.reg_count }}
+                    </span>
+                </td>
+                <td style="padding:.6rem .8rem;">
+                    {% if a.reg_count >= a.max_slots %}
+                    <span class="badge badge-red">Full</span>
+                    {% else %}
+                    <span class="badge badge-green">Open</span>
+                    {% endif %}
+                </td>
+                <td style="padding:.6rem .8rem;">
+                    <a href="{% url 'ngo:activity_edit' a.pk %}" class="btn btn-outline"
+                        style="padding:.3rem .7rem;font-size:.8rem;">Edit</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted);">No upcoming activities.</p>
+    {% endif %}
+</div>
+
+<!-- Recent Registrations -->
+<div class="card" style="margin-bottom:1.5rem;">
+    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem;">Recent Employee Registrations
+        <span style="font-size:.8rem;color:var(--muted);font-weight:400;">
+            — ORM: .select_related('employee', 'activity__ngo')
+        </span>
+    </h2>
+    {% if recent_regs %}
+    <table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+        <thead>
+            <tr style="color:var(--muted);text-align:left;border-bottom:1px solid var(--border);">
+                <th style="padding:.6rem .8rem;">Employee</th>
+                <th style="padding:.6rem .8rem;">Activity</th>
+                <th style="padding:.6rem .8rem;">NGO</th>
+                <th style="padding:.6rem .8rem;">Registered At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in recent_regs %}
+            <tr style="border-bottom:1px solid var(--border);">
+                <td style="padding:.6rem .8rem;font-weight:500;">{{ r.employee.get_full_name|default:r.employee.username
+                    }}</td>
+                <td style="padding:.6rem .8rem;">{{ r.activity.title }}</td>
+                <td style="padding:.6rem .8rem;color:var(--muted);">{{ r.activity.ngo.name|default:"—" }}</td>
+                <td style="padding:.6rem .8rem;color:var(--muted);">{{ r.registered_at|date:"d M Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color:var(--muted);">No registrations yet.</p>
+    {% endif %}
+</div>
+
+<!-- Quick links -->
+<div style="display:flex;gap:1rem;flex-wrap:wrap;">
+    <a href="{% url 'ngo:activity_create' %}" class="btn btn-primary">+ New Activity</a>
+    <a href="{% url 'ngo:ngo_list' %}" class="btn btn-outline">Manage NGOs</a>
+    <a href="/admin/" class="btn btn-outline">Django Admin</a>
+</div>
+{% endblock %}

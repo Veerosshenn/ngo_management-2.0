@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Activity — NGO Portal{% endblock %}
+{% block content %}
+
+<div style="margin-bottom:1rem;">
+    <a href="{% url 'ngo:activity_list' %}" style="color:var(--muted);text-decoration:none;font-size:0.9rem;">
+        ← Back to Activities
+    </a>
+</div>
+
+<div style="max-width:680px;margin:0 auto;">
+    <div class="page-header">
+        <h1>{{ action }} Activity</h1>
+        <p>{% if action == 'Create' %}Add a new NGO activity{% else %}Update activity details{% endif %}</p>
+    </div>
+
+    <div class="card">
+        <form method="post">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <ul class="errorlist" style="margin-bottom:1rem;">
+                {% for e in form.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+            <div class="form-group">
+                <label class="form-label">NGO</label>
+                {{ form.ngo }}
+                {% if form.ngo.errors %}<ul class="errorlist">{% for e in form.ngo.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Activity Title *</label>
+                {{ form.title }}
+                {% if form.title.errors %}<ul class="errorlist">{% for e in form.title.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description *</label>
+                {{ form.description }}
+                {% if form.description.errors %}<ul class="errorlist">{% for e in form.description.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Location *</label>
+                {{ form.location }}
+                {% if form.location.errors %}<ul class="errorlist">{% for e in form.location.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+                <div class="form-group">
+                    <label class="form-label">Event Date & Time *</label>
+                    {{ form.date }}
+                    {% if form.date.errors %}<ul class="errorlist">{% for e in form.date.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Registration Cut-off *</label>
+                    {{ form.cut_off_datetime }}
+                    {% if form.cut_off_datetime.errors %}<ul class="errorlist">{% for e in form.cut_off_datetime.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Maximum Slots *</label>
+                {{ form.max_slots }}
+                {% if form.max_slots.errors %}<ul class="errorlist">{% for e in form.max_slots.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+            </div>
+            <hr>
+            <div style="display:flex;gap:0.75rem;justify-content:flex-end;flex-wrap:wrap;">
+                <a href="{% url 'ngo:activity_list' %}" class="btn btn-outline">Cancel</a>
+                <button type="submit" class="btn btn-primary">{{ action }} Activity</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

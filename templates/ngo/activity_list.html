@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Activities — NGO Portal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Available Activities</h1>
+    <p>Browse and register for upcoming volunteer activities</p>
+</div>
+
+{% if activities %}
+<div class="grid grid-2">
+    {% for activity in activities %}
+    <a href="{% url 'ngo:activity_detail' activity.id %}" style="text-decoration:none;color:inherit;">
+        <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:1rem;">
+                <div>
+                    <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.3rem;">{{ activity.title }}</h3>
+                    <p style="color:var(--muted);font-size:0.85rem;">{{ activity.date|date:"d M Y, H:i" }}</p>
+                </div>
+                <span class="badge {% if activity.registered_count >= activity.max_slots %}badge-red{% elif activity.registered_count > activity.max_slots|add:"-3" %}badge-yellow{% else %}badge-green{% endif %}">
+                    {% if activity.registered_count >= activity.max_slots %}Full{% else %}{{ activity.slots_remaining }} slots{% endif %}
+                </span>
+            </div>
+
+            <p style="color:var(--muted);font-size:0.9rem;line-height:1.5;margin-bottom:1rem;">
+                {{ activity.description|truncatewords:20 }}
+            </p>
+
+            <div style="display:flex;align-items:center;gap:0.5rem;color:var(--muted);font-size:0.85rem;margin-bottom:1rem;">
+                <span>📍 {{ activity.location }}</span>
+            </div>
+
+            <div>
+                <div style="font-size:0.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.4rem;">
+                    Registered: {{ activity.registered_count }} / {{ activity.max_slots }}
+                </div>
+                <div class="slot-bar">
+                    <div class="slot-fill" style="width:{% widthratio activity.registered_count activity.max_slots 100 %}%;"></div>
+                </div>
+            </div>
+
+            <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                {% if activity.ngo %}
+                <span style="font-size:0.78rem;color:var(--muted);">Organised by <span style="color:var(--text);font-weight:600;">{{ activity.ngo.name }}</span></span>
+                {% else %}
+                <span></span>
+                {% endif %}
+                <span style="color:var(--accent);font-size:0.85rem;font-weight:600;">View Details →</span>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+{% else %}
+<div class="empty-state">
+    <div class="icon">📭</div>
+    <h3>No Activities Available</h3>
+    <p style="margin-top:0.5rem;color:var(--muted);">Check back later for upcoming volunteer opportunities.</p>
+</div>
+{% endif %}
+
+{% endblock %}                   

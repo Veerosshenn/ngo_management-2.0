@@ -1,0 +1,79 @@
+services:
+  - type: web
+    name: ngo-management-web
+    env: python
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn ngo_management.wsgi:application"
+    healthCheckPath: "/"
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: ALLOWED_HOSTS
+        value: "ngo-management-web.onrender.com"
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://ngo-management-web.onrender.com"
+      - key: PUBLIC_BASE_URL
+        value: "https://ngo-management-web.onrender.com"
+      - key: SECRET_KEY
+        generateValue: true
+
+  # Optional (Topic 10 production): Celery worker
+  - type: worker
+    name: ngo-management-worker
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A ngo_management worker -l info"
+    envVars:
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: SECRET_KEY
+        key: SECRET_KEY
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: ALLOWED_HOSTS
+        key: ALLOWED_HOSTS
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: CSRF_TRUSTED_ORIGINS
+        key: CSRF_TRUSTED_ORIGINS
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: PUBLIC_BASE_URL
+        key: PUBLIC_BASE_URL
+      - key: DEBUG
+        value: "0"
+
+  # Optional (Topic 10 production): Celery beat scheduler
+  - type: worker
+    name: ngo-management-beat
+    env: python
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "celery -A ngo_management beat -l info"
+    envVars:
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: SECRET_KEY
+        key: SECRET_KEY
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: ALLOWED_HOSTS
+        key: ALLOWED_HOSTS
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: CSRF_TRUSTED_ORIGINS
+        key: CSRF_TRUSTED_ORIGINS
+      - fromService:
+          type: web
+          name: ngo-management-web
+          envVarKey: PUBLIC_BASE_URL
+        key: PUBLIC_BASE_URL
+      - key: DEBUG
+        value: "0"
+

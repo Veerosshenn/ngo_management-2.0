@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Notifications — NGO Portal{% endblock %}
+
+{% block content %}
+<style>
+    .notif-read {
+        opacity: 0.55;
+    }
+
+    .notif-unread {
+        opacity: 1;
+    }
+
+    .dot-read {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-top: 6px;
+        flex-shrink: 0;
+        background: var(--border);
+    }
+
+    .dot-unread {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-top: 6px;
+        flex-shrink: 0;
+        background: var(--accent);
+        box-shadow: 0 0 6px rgba(108, 99, 255, 0.6);
+    }
+</style>
+
+<div class="page-header"
+    style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
+    <div>
+        <h1>Notifications</h1>
+        <p>Stay updated on your activity registrations</p>
+    </div>
+    {% if notifications %}
+    <button class="btn btn-outline" id="mark-all-btn" data-unread="{{ unread_count }}">
+        Mark All as Read
+    </button>
+    {% endif %}
+</div>
+
+{% if notifications %}
+<div style="display:flex;flex-direction:column;gap:0.75rem;" id="notification-list">
+    {% for notif in notifications %}
+
+    <div class="card notif-item {% if notif.is_read %}notif-read{% else %}notif-unread{% endif %}"
+        id="notif-{{ notif.id }}" style="display:flex;align-items:flex-start;gap:1rem;transition:opacity 0.3s;">
+
+        <div class="{% if notif.is_read %}dot-read{% else %}dot-unread{% endif %}"></div>
+
+        <div style="flex:1;">
+            <p style="font-size:0.9rem;line-height:1.6;">{{ notif.message }}</p>
+            <p style="color:var(--muted);font-size:0.78rem;margin-top:0.35rem;">
+                {{ notif.sent_at|date:"d M Y, H:i" }}
+                {% if notif.is_read %}
+                &nbsp;·&nbsp;<span style="color:var(--muted);">Read</span>
+                {% endif %}
+            </p>
+        </div>
+
+        {% if not notif.is_read %}
+        <button class="btn btn-outline mark-read-btn" style="font-size:0.78rem;padding:0.3rem 0.75rem;flex-shrink:0;"
+            data-id="{{ notif.id }}" id="read-btn-{{ notif.id }}">
+            Mark Read
+        </button>
+        {% endif %}
+    </div>
+
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">🔔</div>
+    <h3>No Notifications</h3>
+    <p>Notifications will appear here when you register for or cancel activities.</p>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function getCookie(name) {
+        let v = null;
+        document.cookie.split(';').forEach(c => {
+            c = c.trim();
+            if (c.startsWith(name + '=')) v = decodeURIComponent(c.slice(name.length + 1));
+        });
+        return v;
+    }
+
+    // Mark single notification read
+    document.querySelectorAll('.mark-read-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const id = this.dataset.id;
+            fetch(`/notifications/${id}/read/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            }).then(r => r.json()).then(() => {
+                const item = document.getElementById('notif-' + id);
+                item.classList.remove('notif-unread');
+                item.classList.add('notif-read');
+                const dot = item.querySelector('.dot-unread');
+                if (dot) { dot.className = 'dot-read'; }
+                this.remove();
+            });
+        });
+    });
+
+    // Mark all read
+    const markAllBtn = document.getElementById('mark-all-btn');
+    if (markAllBtn) {
+        markAllBtn.addEventListener('click', function () {
+            fetch('/notifications/read-all/', {
+                method: 'POST',
+                headers: { 'X-CSRFToken': getCookie('csrftoken') }
+            }).then(r => r.json()).then(() => {
+                document.querySelectorAll('.notif-item').forEach(item => {
+                    item.classList.remove('notif-unread');
+                    item.classList.add('notif-read');
+                    const dot = item.querySelector('.dot-unread');
+                    if (dot) dot.className = 'dot-read';
+                    const btn = item.querySelector('.mark-read-btn');
+                    if (btn) btn.remove();
+                });
+                markAllBtn.disabled = true;
+                markAllBtn.textContent = 'All Read';
+            });
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}NGO Partners – NGO Portal{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div>
+        <h1>🤝 NGO Partners</h1>
+        <p>Organisations hosting Service Day activities.</p>
+    </div>
+    <a href="{% url 'ngo:ngo_create' %}" class="btn btn-primary">+ Add NGO</a>
+</div>
+
+{% if ngos %}
+<div class="grid grid-2">
+    {% for ngo in ngos %}
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:start;">
+            <div>
+                <h3 style="font-size:1.05rem;font-weight:600;">{{ ngo.name }}</h3>
+                {% if ngo.description %}
+                <p style="color:var(--muted);font-size:.88rem;margin-top:.3rem;">{{ ngo.description|truncatechars:100 }}
+                </p>
+                {% endif %}
+                <div style="margin-top:.75rem;display:flex;gap:.75rem;font-size:.82rem;color:var(--muted);">
+                    {% if ngo.contact_email %}<span>✉ {{ ngo.contact_email }}</span>{% endif %}
+                    {% if ngo.website %}<a href="{{ ngo.website }}" target="_blank" style="color:var(--accent2);">🔗
+                        Website</a>{% endif %}
+                </div>
+            </div>
+            <span class="badge badge-green" style="white-space:nowrap;">{{ ngo.activity_count }} activit{{
+                ngo.activity_count|pluralize:"y,ies" }}</span>
+        </div>
+        <div style="margin-top:1rem;display:flex;gap:.5rem;">
+            <a href="{% url 'ngo:ngo_edit' ngo.pk %}" class="btn btn-outline"
+                style="font-size:.82rem;padding:.35rem .8rem;">Edit</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="icon">🤝</div>
+    <h3>No NGOs yet</h3>
+    <p>Add your first NGO partner to get started.</p>
+    <a href="{% url 'ngo:ngo_create' %}" class="btn btn-primary" style="margin-top:1rem;">Add NGO</a>
+</div>
+{% endif %}
+{% endblock %}
