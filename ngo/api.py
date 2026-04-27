@@ -103,3 +103,24 @@ class ActivityViewSet(viewsets.ModelViewSet):
         resp = Response({'activity_id': activity.id, 'count': len(data), 'results': data})
         cache.set(cache_key, resp, timeout=60)
         return resp
+
+    @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
+    def availability(self, request, pk=None):
+        """
+        Topic 11: NGO service endpoint the gateway can call to check slot availability.
+        GET /api/v1/activities/<id>/availability/
+        """
+        activity = self.get_object()
+        from registration.models import Registration
+
+        active_count = Registration.objects.filter(activity=activity, status="active").count()
+        remaining = max(int(activity.max_slots) - int(active_count), 0)
+        return Response(
+            {
+                "activity_id": activity.id,
+                "max_slots": activity.max_slots,
+                "active_registrations": active_count,
+                "remaining_slots": remaining,
+                "available": remaining > 0,
+            }
+        )
