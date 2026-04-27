@@ -102,6 +102,45 @@
             font-weight: 700;
         }
 
+        /* Real-time-ish notification toast */
+        .toast-stack {
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: min(360px, calc(100vw - 32px));
+        }
+
+        .toast {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+            animation: toastIn 0.2s ease;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+            color: var(--accent2);
+        }
+
+        .toast-msg {
+            font-size: 0.88rem;
+            color: var(--text);
+            line-height: 1.35;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         .btn-nav-logout {
             background: transparent;
             border: 1px solid var(--border);
@@ -428,7 +467,10 @@
             <a href="{% url 'registration:qr_checkin' %}">Check-In</a>
             <a href="{% url 'notifications:notification_list' %}">
                 Notifications
-                {% if unread_count %}<span class="nav-badge">{{ unread_count }}</span>{% endif %}
+                <span class="nav-badge" id="nav-notif-badge"
+                    style="display:{% if unread_count %}inline-flex{% else %}none{% endif %};">
+                    {{ unread_count|default:"0" }}
+                </span>
             </a>
             {% if user.is_admin %}
             <a href="{% url 'ngo:activity_create' %}">+ Create Activity</a>
@@ -463,21 +505,70 @@
         {% block content %}{% endblock %}
     </main>
 
+    <div class="toast-stack" id="toast-stack" aria-live="polite" aria-atomic="true"></div>
+
     <script>
-        // Unread notification count for navbar
+        // Topic 10.3 (bonus): near real-time notifications via polling JSON endpoint.
         {% if user.is_authenticated %}
-        fetch('/notifications/')
-            .then(r => r.text())
-            .then(html => {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const count = doc.querySelector('[data-unread]');
-                if (count) {
-                    const badge = document.querySelector('.nav-badge');
-                    const n = count.getAttribute('data-unread');
-                    if (badge && n > 0) badge.textContent = n;
+        (function () {
+            const badge = document.getElementById('nav-notif-badge');
+            const toastStack = document.getElementById('toast-stack');
+            const storageKey = 'ngo:last_notif_id';
+            let sinceId = parseInt(localStorage.getItem(storageKey) || '0', 10) || 0;
+            let inFlight = false;
+
+            function showBadge(n) {
+                if (!badge) return;
+                if (n > 0) {
+                    badge.style.display = 'inline-flex';
+                    badge.textContent = String(n);
+                } else {
+                    badge.style.display = 'none';
                 }
-            }).catch(() => { });
+            }
+
+            function toast(message) {
+                if (!toastStack) return;
+                const el = document.createElement('div');
+                el.className = 'toast';
+                el.innerHTML = `
+                    <div class="toast-title">New notification</div>
+                    <div class="toast-msg"></div>
+                `;
+                el.querySelector('.toast-msg').textContent = message;
+                toastStack.appendChild(el);
+                setTimeout(() => el.remove(), 6000);
+            }
+
+            async function poll() {
+                if (inFlight) return;
+                inFlight = true;
+                try {
+                    const url = `/notifications/unread/?since_id=${sinceId}`;
+                    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!r.ok) return;
+                    const data = await r.json();
+                    showBadge(parseInt(data.unread_count || 0, 10) || 0);
+
+                    const latest = Array.isArray(data.latest) ? data.latest : [];
+                    // newest first; show oldest first for nicer UX
+                    latest.slice().reverse().forEach(n => {
+                        if (n && n.id && n.id > sinceId) {
+                            sinceId = n.id;
+                            localStorage.setItem(storageKey, String(sinceId));
+                            if (n.message) toast(n.message);
+                        }
+                    });
+                } catch (_) {
+                    // ignore transient errors
+                } finally {
+                    inFlight = false;
+                }
+            }
+
+            poll();
+            setInterval(poll, 5000);
+        })();
         {% endif %}
 
         // Auto-dismiss alerts
