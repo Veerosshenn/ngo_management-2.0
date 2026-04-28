@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from accounts.models import CustomUser
 from ngo.models import Activity, NGO
+from registration.models import Registration
 from registration.services import RegistrationService
 
 
@@ -52,3 +53,51 @@ class RegistrationServiceEdgeCaseTests(TestCase):
     def test_register_user_rejects_invalid_activity_id(self):
         with self.assertRaises(Activity.DoesNotExist):
             RegistrationService.register_user(self.employee, 999999)
+
+
+class RegistrationJourneyIntegrationTests(TestCase):
+    def setUp(self):
+        self.employee = CustomUser.objects.create_user(
+            username="journey_user",
+            password="Journey123!",
+            role="employee",
+        )
+        self.ngo = NGO.objects.create(
+            name="Journey NGO",
+            contact_email="journey@ngo.test",
+            website="https://journey.example",
+            description="Journey test NGO",
+        )
+        self.activity = Activity.objects.create(
+            title="Journey Activity",
+            description="Journey test activity",
+            location="Kuala Lumpur",
+            date=timezone.now() + timedelta(days=2),
+            cut_off_datetime=timezone.now() + timedelta(days=1),
+            max_slots=2,
+            ngo=self.ngo,
+        )
+
+    def test_login_list_register_and_verify_slot_count(self):
+        login_response = self.client.post(
+            "/accounts/login/",
+            {
+                "username": "journey_user",
+                "password": "Journey123!",
+            },
+            follow=True,
+        )
+        self.assertEqual(login_response.status_code, 200)
+        self.assertContains(login_response, "Journey Activity", status_code=200)
+
+        list_response = self.client.get("/ngo/")
+        self.assertEqual(list_response.status_code, 200)
+        self.assertContains(list_response, "Journey Activity")
+
+        register_response = self.client.post(f"/registration/register/{self.activity.id}/", follow=True)
+        self.assertEqual(register_response.status_code, 200)
+
+        self.activity.refresh_from_db()
+        self.assertEqual(Registration.objects.filter(employee=self.employee, activity=self.activity, status="active").count(), 1)
+        self.assertEqual(self.activity.get_registered_count(), 1)
+        self.assertEqual(self.activity.slots_remaining(), 1)
