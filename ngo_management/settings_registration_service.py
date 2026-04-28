@@ -8,6 +8,7 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "rest_framework",
+    "rest_framework.authtoken",
     "accounts.apps.AccountsConfig",
     "ngo",
     "registration",
