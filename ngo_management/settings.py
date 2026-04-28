@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    # Swagger/OpenAPI (Topic 8 documentation)
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -205,6 +207,14 @@ REST_FRAMEWORK = {
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'NGO Management API',
+    'DESCRIPTION': 'BIT306 NGO Management Portal API (v1).',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }
 
 # -----------------------------
