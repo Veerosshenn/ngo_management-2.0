@@ -215,6 +215,18 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'BIT306 NGO Management Portal API (v1).',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    # Show Swagger "Authorize" button for DRF token auth.
+    'APPEND_COMPONENTS': {
+        'securitySchemes': {
+            'TokenAuth': {
+                'type': 'apiKey',
+                'in': 'header',
+                'name': 'Authorization',
+                'description': 'Format: Token <your_token>',
+            },
+        },
+    },
+    'SECURITY': [{'TokenAuth': []}],
 }
 
 # -----------------------------
